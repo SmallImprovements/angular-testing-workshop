@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <title>reveal.js - The HTML Presentation Framework</title>
+
+  <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+  <meta name="author" content="Hakim El Hattab">
+
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <link rel="stylesheet" href="css/reveal.min.css">
+  <link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+  <!-- For syntax highlighting -->
+  <link rel="stylesheet" href="lib/css/zenburn.css">
+
+  <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+  <script>
+    document.write('<link rel="stylesheet" href="css/print/' + ( window.location.search.match(/print-pdf/gi) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">');
+  </script>
+</head>
+
+<body>
+
+<div class="reveal">
+
+<!-- Any section element inside of this container is displayed as a slide -->
+<div class="slides">
+<section>
+  <h2>Testing with AngularJS</h2>
+</section>
+
+
+<section>
+  <h2>Overview</h2>
+
+  <ul>
+    <li>Tools</li>
+    <li>Unit Testing</li>
+    <li>Directive Testing</li>
+    <li>E2E Testing</li>
+  </ul>
+</section>
+
+<section>
+  <h2>AngularJS Test Pyramid</h2>
+
+  <p><img src="images/angular-pyramid-alpha.png" alt=""/></p>
+</section>
+
+<section>
+  <h2>Tools</h2>
+
+  <ul>
+    <li class="fragment"><b>Test Runner:</b> Karma</li>
+    <p/>
+    <li class="fragment"><b>Test Framework:</b> Jasmine</li>
+    <p/>
+    <li class="fragment"><b>Headless Browser:</b> PhantomJS</li>
+  </ul>
+
+</section>
+
+<section>
+
+  <h2>Alternatives</h2>
+
+  <ul>
+    <li class="fragment"><b>Framework:</b> Mocha</li>
+    <p/>
+    <li class="fragment"><b>Assertions:</b> Chai</li>
+    <p/>
+    <li class="fragment"><b>Mocking: </b> Sinon</li>
+  </ul>
+
+</section>
+
+<section>
+
+  <h3>Unit Tests</h3>
+
+  <ul>
+    <li class="fragment">Test your business logic in Services, Controllers and Filters</li>
+    <p/>
+    <li class="fragment">Perfect for Test Driven Development (TDD)</li>
+    <p/>
+    <li class="fragment">Principle: Testing in Isolation -> Dependencies are mocked</li>
+  </ul>
+
+
+</section>
+
+<section>
+  <h3>Unit Testing</h3>
+    <pre><code class="javascript">
+      angular.module('app.mathService', [])
+        .service('mathService', function() {
+          this.add = function(a, b) {
+            return a + b;
+          };
+        });
+
+      describe('mathService', function () {
+        var mathService;
+
+        beforeEach(function () {
+          module('app.mathService');
+
+          inject(function (_mathService_) {
+            mathService = _mathService_;
+          });
+        });
+
+        describe('add()', function() {
+          it('adds two numbers', function() {
+            expect(mathService.add(2, 3)).toEqual(5);
+          });
+        });
+      });
+    </code></pre>
+</section>
+
+<section>
+  <h3>Mocking</h3>
+
+  <pre><code class="javascript">
+      angular.module('app.itemService', [])
+        .service('itemService', function(validatorService) {
+          this.update = function(item) {
+            if (validatorService.isValid(item)) {
+              // Update item
+              return true;
+            } else {
+              return false;
+            }
+          };
+        });
+  </code></pre>
+
+</section>
+
+<section>
+  <h3>Mocking</h3>
+
+  <pre><code class="javascript">
+      describe('itemService', function () {
+        var itemService, isValid;
+
+        beforeEach(function () {
+          module('app.itemService', function($provide) {
+            $provide.constant('validatorService', {
+              isValid: function() { return isValid; }
+            });
+          });
+
+          inject(function (_itemService_) {
+            itemService = _itemService_;
+          });
+
+          isValid = false;
+        });
+      });
+  </code></pre>
+
+</section>
+
+<section>
+  <h3>Mocking</h3>
+
+  <pre><code class="javascript">
+      // $provide.constant('itemService', {
+      //   isValid: function() { return isValid; }
+      // });
+
+      describe('update()', function() {
+        it('updates when validation is passed', function() {
+          isValid = true;
+          expect(itemService.update({})).toBeTruthy();
+        });
+
+        it('does not update when validation fails', function() {
+          isValid = false;
+          expect(itemService.update({})).toBeFalsy();
+        });
+      });
+  </code></pre>
+
+</section>
+
+<section>
+  <h3>Spying</h3>
+
+  <pre><code class="javascript">
+      angular.module('app.itemService', [])
+        .service('itemService', function(validatorService) {
+          this.update = function(item) {
+            if (validatorService.isValid(item)) {
+              // Update item
+              return true;
+            } else {
+              return false;
+            }
+          };
+        });
+  </code></pre>
+</section>
+
+<section>
+  <h3>Spying</h3>
+
+  <pre><code class="javascript">
+
+      describe('itemService', function () {
+        var itemService, validatorService;
+
+        beforeEach(function () {
+          module('app.itemService');
+
+          inject(function (_itemService_, _validatorService_) {
+            itemService = _itemService_;
+            validatorService = _validatorService_;
+          });
+        });
+      });
+  </code></pre>
+</section>
+
+<section>
+  <h3>Spying</h3>
+
+  <pre><code class="javascript">
+
+      describe('update()', function() {
+        var item = {};
+
+        it('updates when validation is passed', function() {
+          spyOn(validatorService, 'isValid').and.returnValue(true);
+          expect(validatorService.isValid).toHaveBeenCalledWith(item);
+          expect(itemService.update(item)).toBeTruthy();
+        });
+
+        it('does not update when validation fails', function() {
+          spyOn(validatorService, 'isValid').and.returnValue(false);
+          expect(validatorService.isValid).toHaveBeenCalledWith(item);
+          expect(itemService.update(item)).toBeFalsy();
+        });
+      });
+  </code></pre>
+</section>
+
+<section>
+  <h3>Directive Tests</h3>
+
+  <ul>
+    <li class="fragment">A part of the app tested through the DOM</li>
+    <p/>
+    <li class="fragment">Test interaction with UI</li>
+    <p/>
+    <li class="fragment">Integration Test</li>
+  </ul>
+
+</section>
+
+<section>
+  <h3>Directive Testing</h3>
+      <pre><code class="javascript">
+          angular.module('app.incrementer', []).
+            .directive('incrementer', function() {
+              return {
+                restrict: 'E',
+                scope: {
+                  item: '='
+                },
+                template: '<button ng-click="increment()">+</button>',
+                link: function(scope) {
+                  scope.increment = function() {
+                    item.count = item.count + 1;
+                  }
+                }
+              };
+            });
+      </code></pre>
+</section>
+
+<section>
+  <h3>Directive Testing</h3>
+      <pre><code class="javascript">
+        describe('incrementer', function () {
+          var element, scope, item = {};
+
+          beforeEach(function () {
+            item.count = 0;
+
+            module('app.incrementer');
+
+            inject(function ($compile, $rootScope) {
+              var $scope = $rootScope.$new();
+              $scope.item = item;
+              template = '<incrementer item="item"></incrementer>';
+
+              element = angular.element(template);
+              $compile(element)($scope);
+              $scope.$digest();
+
+              scope = element.isolateScope();
+            });
+          });
+        });
+      </code></pre>
+</section>
+
+<section>
+
+  <h3>Directive Testing</h3>
+
+      <pre><code>
+        it('calls increment on click', function () {
+          spyOn(scope, 'increment');
+          element.find('button').click();
+          expect(scope.increment).toHaveBeenCalled();
+        });
+
+        describe('increment()', function() {
+          it('increments the item\'s count property', function() {
+            expect(item.count).toEqual(0);
+            scope.increment();
+            expect(item.count).toEqual(1);
+          });
+        });
+      </code></pre>
+
+</section>
+
+<section>
+  <h3>E2E (Scenario) Tests</h3>
+
+  <ul>
+    <li class="fragment">Integrated with Angular: Knows when the app is ready</li>
+    <p/>
+    <li class="fragment"><b>Protractor:</b> Based on Webdriver</li>
+    <p/>
+    <li class="fragment">Jasmine like syntax</li>
+  </ul>
+
+</section>
+
+<section>
+  <h3>E2E Test Example</h3>
+
+      <pre><code>
+        describe('E2E Test', function () {
+
+          beforeEach(function () {
+            browser().navigateTo('http://localhost/url/to/test/index.html');
+          });
+
+          it("should show a dialog", function () {
+            element('.show-dialog').click();
+            expect(element(".dialog").count()).toBe(1);
+          });
+        });
+      </code></pre>
+</section>
+
+<section>
+  <h3>Thank you</h3>
+</section>
+
+
+</div>
+
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.min.js"></script>
+
+<script>
+
+  // Full list of configuration options available here:
+  // https://github.com/hakimel/reveal.js#configuration
+  Reveal.initialize({
+    controls: true,
+    progress: true,
+    history: true,
+    center: true,
+
+    theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+    transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+    // Optional libraries used to extend on reveal.js
+    dependencies: [
+      { src: 'lib/js/classList.js', condition: function () {
+        return !document.body.classList;
+      } },
+      { src: 'plugin/markdown/marked.js', condition: function () {
+        return !!document.querySelector('[data-markdown]');
+      } },
+      { src: 'plugin/markdown/markdown.js', condition: function () {
+        return !!document.querySelector('[data-markdown]');
+      } },
+      { src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+        hljs.initHighlightingOnLoad();
+      } },
+      { src: 'plugin/zoom-js/zoom.js', async: true, condition: function () {
+        return !!document.body.classList;
+      } },
+      { src: 'plugin/notes/notes.js', async: true, condition: function () {
+        return !!document.body.classList;
+      } }
+    ]
+  });
+
+</script>
+
+</body>
+</html>
